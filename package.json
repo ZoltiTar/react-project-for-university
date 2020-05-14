@@ -16,7 +16,8 @@
     "flux-store": "^1.2.4",
     "axios": "^0.19.2",
     "json-server": "^0.16.1",
-    "faker": "^4.1.0"
+    "faker": "^4.1.0",
+    "react-datepicker": "^2.15.0"
   },
   "scripts": {
     "start": "react-scripts start",
