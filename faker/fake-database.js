@@ -24,9 +24,9 @@ const Issues = [
     }
 ];
 
-function generateClerk() {
+function generateClerk(id) {
     return {
-        id: faker.random.number({min: 1, max: 1000}),
+        id,
         name: `${faker.name.firstName()} ${faker.name.lastName()}`
     };
 }
@@ -87,7 +87,7 @@ function generateAppointment(clerk, id) {
 
 function generateDatabase() {
     for (let i = 0; i < 5; i++) {
-        clerks.push(generateClerk());
+        clerks.push(generateClerk(i));
     }
     for (let i = 0, j = -1; i < 100; i++) {
         if (i % 20 === 0) {

@@ -23,20 +23,18 @@ export default class AppointmentList extends React.Component {
         this.onChangeOfIssuesList = this.onChangeOfIssuesList.bind(this);
     }
 
+    generateAppointmentsForDate = () => {
+        return this.state.appointments.filter(app => compareDatesWithoutTime(new Date(app.date), this.state.date));
+    };
 
     handleDateChange = (date) => {
         AppointmentActions.getAppointments(this.state.clerkId);
-        let st = this.state;
-        st.date = date;
-        st.appointmentsForDate = st.appointments.filter(app => compareDatesWithoutTime(new Date(app.date), st.date));
-        this.setState(st);
+        this.setState({date, appointmentsForDate: this.generateAppointmentsForDate()});
     };
 
     onChangeOfAppointmentList() {
-        let st = this.state;
-        st.appointments = appointmentStore._appointments;
-        st.appointmentsForDate = st.appointments.filter(app => compareDatesWithoutTime(new Date(app.date), st.date));
-        this.setState(st);
+        let appointments = appointmentStore._appointments;
+        this.setState({appointments, appointmentsForDate: this.generateAppointmentsForDate()});
     }
 
     componentDidMount() {
@@ -50,9 +48,8 @@ export default class AppointmentList extends React.Component {
     }
 
     onChangeOfIssuesList() {
-        let st = this.state;
-        st.issues = issueStore._issues;
-        this.setState(st);
+        let issues = issueStore._issues;
+        this.setState({issues});
     }
 
     render() {

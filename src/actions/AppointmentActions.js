@@ -15,13 +15,6 @@ class AppointmentActions {
         })
     }
 
-    getAppointmentsByDay(date) {
-        dispatcher.handleViewAction({
-            commandType: 'GET_APPOINTMENTS',
-            date: new Date(date).toISOString().substring(0, 10)
-        })
-    }
-
 }
 
 export default new AppointmentActions();

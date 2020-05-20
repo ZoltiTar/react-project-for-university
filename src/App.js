@@ -11,7 +11,7 @@ function App() {
             <Header/>
             <Switch>
                 <Route path={"/"} exact component={AppointmentForm}/>
-                <Route path={"/myAppointments"} exact component={() => <AppointmentList clerkId={660}/>}/>
+                <Route path={"/myAppointments"} exact component={() => <AppointmentList clerkId={0}/>}/>
                 <Route path={"/manageAppointments"} exact component={() => <AppointmentList/>}/>
             </Switch>
         </BrowserRouter>
