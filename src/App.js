@@ -3,14 +3,18 @@ import './App.scss';
 import AppointmentForm from "./components/appointment/AppointmentForm";
 import Header from "./components/Header";
 import AppointmentList from "./components/appointment/AppointmentList";
+import {BrowserRouter, Route, Switch} from "react-router-dom";
 
 function App() {
     return (
-        <React.Fragment>
+        <BrowserRouter>
             <Header/>
-            <AppointmentForm/>
-            <AppointmentList clerkId={801}/>
-        </React.Fragment>
+            <Switch>
+                <Route path={"/"} exact component={AppointmentForm}/>
+                <Route path={"/myAppointments"} exact component={() => <AppointmentList clerkId={660}/>}/>
+                <Route path={"/manageAppointments"} exact component={() => <AppointmentList/>}/>
+            </Switch>
+        </BrowserRouter>
     );
 }
 
