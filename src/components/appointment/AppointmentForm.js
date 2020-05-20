@@ -1,8 +1,12 @@
 import React from 'react';
-import {Button, Col, Form} from "react-bootstrap";
-import DatePicker from "react-datepicker";
+import {Button, Col, Form, Row} from "react-bootstrap";
 
 import "react-datepicker/dist/react-datepicker.css";
+import {DateDayPicker, isWeekday} from "../datepicker/DateDayPicker";
+import DateTimePicker from "../datepicker/DateTimePicker";
+import IssueActions from "../../actions/IssueActions";
+import issueStore from "../../store/IssueStore";
+import AppointmentActions from "../../actions/AppointmentActions";
 
 class AppointmentForm extends React.Component {
     constructor(props) {
@@ -13,9 +17,24 @@ class AppointmentForm extends React.Component {
                 date: new Date(),
                 issues: []
             },
+            issues: [],
             reservedTimes: props.reservedTimes
-        }
+        };
+        this.onChangeOfIssuesList = this.onChangeOfIssuesList.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
     }
+
+    onChangeOfIssuesList() {
+        let st = this.state;
+        st.issues = issueStore._issues;
+        this.setState(st);
+    }
+
+    handleNameChange = (e) => {
+        let st = this.state;
+        st.form.name = e.target.value;
+        this.setState(st);
+    };
 
     handleDateChange = (date) => {
         let st = this.state;
@@ -25,107 +44,126 @@ class AppointmentForm extends React.Component {
 
     handleTimeChange = (date) => {
         let st = this.state;
-        st.form.date.setHours(date.getHours(), date.getMinutes(), 0);
+        st.form.date.setHours(date.getHours(), date.getMinutes(), 0, 0);
         this.setState(st);
-        console.log(st);
     };
 
     handleIssueChange = (e) => {
+        let st = this.state;
         if (e.target.checked === true) {
-            let st = this.state;
-            st.form.issues.push(e.target.value);
+            st.form.issues.push(+e.target.value);
             this.setState(st);
         } else {
-            let st = this.state;
-            let index = st.form.issues.indexOf(e.target.value);
+            let index = st.form.issues.indexOf(+e.target.value);
             st.form.issues.splice(index, 1);
-            this.setState(st);
         }
-    };
-
-    isWeekday = (date) => {
-        const day = date.getDay();
-        return day !== 0 && day !== 6;
+        this.setState(st);
     };
 
     setFirstAvailableDate = (date) => {
-        date.setDate(16);
         const nineToday = new Date(date).setHours(9, 0, 0);
         const fiveToday = new Date(date).setHours(17, 0, 0);
-        if (this.isWeekday(date) && date > nineToday && date < fiveToday) {
+        if (isWeekday(date) && date > nineToday && date < fiveToday) {
             const minutes = date.getMinutes() < 30 ? 30 : 0;
             const hours = minutes === 0 ? date.getHours() + 1 : date.getHours();
-            date.setHours(hours, minutes, 0);
+            date.setHours(hours, minutes, 0, 0);
         }
-        if (this.isWeekday(date) && date < nineToday) {
-            date.setHours(9, 0, 0);
+        if (isWeekday(date) && date < nineToday) {
+            date.setHours(9, 0, 0, 0);
         }
         if (date.getDay() < 5 && date > fiveToday) {
             date.setDate(date.getDate() + 1);
-            date.setHours(9, 0, 0);
+            date.setHours(9, 0, 0, 0);
         }
         if (date.getDay() > 4) {
             let plusDays = 7 - date.getDay() + 1;
             let dt = date.getDate() + plusDays;
             date.setDate(dt);
-            date.setHours(9, 0, 0);
+            date.setHours(9, 0, 0, 0);
         }
     };
 
     componentDidMount() {
+        IssueActions.getIssues();
+        issueStore.addChangeListener(this.onChangeOfIssuesList);
         this.setFirstAvailableDate(this.state.form.date);
         this.setState(this.state.form.date);
     }
 
+    componentWillUnmount() {
+        issueStore.removeChangeListener(this.onChangeOfIssuesList);
+    }
+
+    handleSubmit(e) {
+        e.preventDefault();
+        let appointment = {...this.state.form};
+        appointment.date = appointment.date.toISOString();
+        console.log(appointment);
+        AppointmentActions.bookAppointment(appointment);
+    }
+
     render() {
         return (
-            <Form className={"container"}>
+            <Form className={"container my-2"} onSubmit={this.handleSubmit}>
+                <Row className={'justify-content-center'}>
+                    <Col md lg={{span: 10}}>
+                        <h1>Book an appointment</h1>
+                    </Col>
+                </Row>
                 <Form.Row className={'justify-content-center'}>
-                    <Col md lg={{span: 4}}>
-                        <Form.Label style={{display: "block"}}>Name</Form.Label>
-                        <Form.Control type="text"/>
+                    <Col md lg={{span: 5}}>
+                        <Form.Label style={{display: "block"}}><h3>Name</h3></Form.Label>
+                        <Form.Control placeholder={"John Doe/Jane Doe"} type="text" onChange={this.handleNameChange}/>
                     </Col>
-                    <Col md lg={{span: 2, offset: 1}} className={"text-right"}>
-                        <Form.Label style={{display: "block"}}>Date</Form.Label>
-                        <DatePicker className={"form-control text-right"} minDate={new Date()}
-                                    filterDate={this.isWeekday}
-                                    dateFormat="MMMM do, yyyy"
-                                    selected={this.state.form.date} value={this.state.form.date}
-                                    onChange={this.handleDateChange}/>
+                    <Col md lg={{span: 2, offset: 2}}>
+                        <DateDayPicker date={this.state.form.date} onChangeFunction={this.handleDateChange}
+                                       style={{display: "block"}}/>
                     </Col>
-                    <Col md lg={{span: 1}} className={"text-right"}>
-                        <Form.Label style={{display: "block"}}>Time</Form.Label>
-                        <DatePicker showTimeSelect showTimeSelectOnly className={"form-control text-right"}
-                                    disabledKeyboardNavigation dateFormat="hh:mm"
-                                    selected={this.state.form.date} value={this.state.form.date}
-                                    minTime={this.state.form.date}
-                                    maxTime={new Date(this.state.form.date).setHours(16, 45)}
-                                    onChange={this.handleTimeChange}/>
+                    <Col md lg={{span: 1}}>
+                        <DateTimePicker date={this.state.form.date} onChangeFunction={this.handleTimeChange}
+                                        style={{fontSize: '0.8em'}}/>
                     </Col>
                 </Form.Row>
                 <Form.Row className={"justify-content-center"}>
-                    <Col md lg={{span: 4}} className={"text-left"}>
-                        <Form.Label>Issues</Form.Label>
-                        <Form.Check type={'checkbox'} id={'issue-0'} value={0} label={'Marriage'}
-                                    onChange={this.handleIssueChange}/>
-                        <Form.Check type={'checkbox'} id={'issue-1'} value={1} label={'Birth certificate'}
-                                    onChange={this.handleIssueChange}/>
-                        <Form.Check type={'checkbox'} id={'issue-2'} value={2} label={'Renew driver\'s license'}
-                                    onChange={this.handleIssueChange}/>
+                    <Col md lg={{span: 10}} className={"text-left"}>
+                        <h3>Issues</h3>
                     </Col>
-                    <Col md lg={{span: 4}} className={"text-right"}>
-                        <Form.Label>Required documents for selected issues</Form.Label>
-                        <ul>
-                            <li>Marriage: ID card, birth certificate</li>
-                            <li>Birth certificate: ID card</li>
-                        </ul>
+                    <Col md lg={{span: 8}} className={"text-left my-2"}>
+                        {this.state.issues.map(iss => {
+                            return <Form.Check inline type={'checkbox'} id={`issue-${iss.id}`} value={iss.id}
+                                               label={iss.issue}
+                                               onChange={this.handleIssueChange}/>
+                        })}
                     </Col>
                 </Form.Row>
                 <Form.Row className={"justify-content-center"}>
-                    <Col md lg={{span: 8}} className={'text-right'}>
-                        <div style={{display: 'inline'}}>Estimated time required: <span className={'text-warning'}>15 minutes</span>
+                    <Col md lg={{span: 10}}>
+                        <h4>Required documents for selected issues</h4>
+                    </Col>
+                    <Col md lg={{span: 8}}>
+                        {this.state.issues.map(issue => {
+                            if (this.state.form.issues.includes(issue.id)) {
+                                return <div>{issue.issue + ': ' + issue.documents.join(', ')}</div>;
+                            }
+                        })}
+                    </Col>
+                </Form.Row>
+                <Form.Row className={"justify-content-center my-3"}>
+                    <Col md lg={{span: 10}} className={'text-right'}>
+                        <div style={{display: 'inline'}}>
+                            <em>Estimated time required: </em>
+                            <span className={'font-weight-bold text-warning'}>
+                                {
+                                    [...this.state.issues].reduce(
+                                        (total, iss) => {
+                                            return total + this.state.form.issues.includes(iss.id) ? iss.est : 0;
+                                        }, 0)
+                                } minutes
+                            </span>
                         </div>
-                        <Button className={'mx-2'} variant={'primary'}>Save!</Button>
+                    </Col>
+                    <Col md lg={{span: 10}} className={'text-right'}>
+                        <Button className={'px-5 my-2'} variant={'primary'} type={"submit"}>Book it!</Button>
                     </Col>
                 </Form.Row>
             </Form>
