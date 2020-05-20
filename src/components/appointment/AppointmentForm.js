@@ -23,6 +23,13 @@ class AppointmentForm extends React.Component {
         this.setState(st);
     };
 
+    handleTimeChange = (date) => {
+        let st = this.state;
+        st.form.date.setHours(date.getHours(), date.getMinutes(), 0);
+        this.setState(st);
+        console.log(st);
+    };
+
     handleIssueChange = (e) => {
         if (e.target.checked === true) {
             let st = this.state;
@@ -42,13 +49,22 @@ class AppointmentForm extends React.Component {
     };
 
     setFirstAvailableDate = (date) => {
+        date.setDate(16);
         const nineToday = new Date(date).setHours(9, 0, 0);
-        if (date < nineToday) {
+        const fiveToday = new Date(date).setHours(17, 0, 0);
+        if (this.isWeekday(date) && date > nineToday && date < fiveToday) {
+            const minutes = date.getMinutes() < 30 ? 30 : 0;
+            const hours = minutes === 0 ? date.getHours() + 1 : date.getHours();
+            date.setHours(hours, minutes, 0);
+        }
+        if (this.isWeekday(date) && date < nineToday) {
             date.setHours(9, 0, 0);
-        } else if (date.getDay() < 5) {
+        }
+        if (date.getDay() < 5 && date > fiveToday) {
             date.setDate(date.getDate() + 1);
             date.setHours(9, 0, 0);
-        } else {
+        }
+        if (date.getDay() > 4) {
             let plusDays = 7 - date.getDay() + 1;
             let dt = date.getDate() + plusDays;
             date.setDate(dt);
@@ -84,13 +100,7 @@ class AppointmentForm extends React.Component {
                                     selected={this.state.form.date} value={this.state.form.date}
                                     minTime={this.state.form.date}
                                     maxTime={new Date(this.state.form.date).setHours(16, 45)}
-                                    timeIntervals={15}
-                                    onChange={date => {
-                                        let st = this.state;
-                                        st.form.date.setHours(date.getHours(), date.getMinutes(), 0);
-                                        this.setState(st);
-                                        console.log(st);
-                                    }}/>
+                                    onChange={this.handleTimeChange}/>
                     </Col>
                 </Form.Row>
                 <Form.Row className={"justify-content-center"}>
@@ -113,7 +123,8 @@ class AppointmentForm extends React.Component {
                 </Form.Row>
                 <Form.Row className={"justify-content-center"}>
                     <Col md lg={{span: 8}} className={'text-right'}>
-                        <div style={{display: 'inline'}}>Estimated time required: <span className={'text-warning'}>15 minutes</span></div>
+                        <div style={{display: 'inline'}}>Estimated time required: <span className={'text-warning'}>15 minutes</span>
+                        </div>
                         <Button className={'mx-2'} variant={'primary'}>Save!</Button>
                     </Col>
                 </Form.Row>
